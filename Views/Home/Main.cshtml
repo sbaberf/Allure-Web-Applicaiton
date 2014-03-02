@@ -1,0 +1,133 @@
+﻿@{
+    ViewBag.Title = "About Us";
+}
+
+    <script src="@Url.Content("~/Scripts/jquery-1.9.1.js")" type="text/javascript"></script>
+    <script src="@Url.Content("~/Scripts/jquery.signalR-1.0.1.js")" type="text/javascript"></script> 
+    <script src="@Url.Content("~/signalr/hubs")" type="text/javascript"></script>
+    <script src="@Url.Content("~/Scripts/jquery.cookie.js")" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+    $(function () {
+
+
+        var matrixHub = null;
+
+        $("#loginButton").click(function () {
+
+            var matrixHub = $.cookie("con");
+
+        });
+
+
+
+        $("#logoutButton").click(function () {
+            $("#log").append("<span class='log send'>" + $.cookie("un") + "</span><br/>");
+        });
+
+        // signalR callback for outgoing xml debug
+        matrixHub.client.sendXml = function (message) {
+            $("#log").append("<span class='log send'>" + message + "</span><br/>");
+
+        };
+
+        // signalR callback for incoming xml debug
+        matrixHub.client.receiveXml = function (message) {
+            $("#log").append("<span class='log recv'>" + message + "</span><br/>");
+
+        };
+
+        // signalR callbck for displaying matrix event (infos only)
+        matrixHub.client.displayEvent = function (event) {
+            $("#events").append("<span class='event'>" + event + "</span><br/>");
+
+            if (event == "OnLogin") {
+
+                //  $("#log").append("<span class='log recv'>" + "AOOO NA JEEEEEEEEEE" + "</span><br/>");
+                window.location.href = "Home/Main";
+            }
+        };
+
+        // signalR callback for contacts
+        matrixHub.client.onRosterItem = function (uniqueid, jid, name) {
+            var statusId = "status_" + uniqueid;
+            var showId = "show_" + uniqueid;
+            $("#roster").append(
+                "<li id='" + uniqueid + "'>" +
+                    "<span class='jid'>" + jid + "</span>" +
+                    "<span class='name'>" + name + "</span>" +
+                    "<span id='" + showId + "' class='show'></span>" +
+                    "<span id='" + statusId + "' class='status'>Offline</span>" +
+                "</li>");
+        };
+
+        // signalR callbck for incoming presence
+        matrixHub.client.onPresence = function (uniqueid, jid, show, status) {
+            var showId = "show_" + uniqueid;
+            var statusId = "status_" + uniqueid;
+            $("#" + showId).text(show);
+            $("#" + statusId).text(status);
+        };
+
+        matrixHub.client.onMessage = function (msg) {
+            $("#log").append("<span class='from'>" + msg.From + ":</span>");
+        };
+
+        $('#sendmessage').click(function () {
+            // Call the Send method on the hub. 
+            chat.server.send({ Msg: $('#message').val(), Group: "RoomA" });
+            //chat.server.send($('#displayname').val(), $('#message').val());
+            // Clear text box and reset focus for next comment. 
+            $('#message').val('').focus();
+        });
+
+        $.connection.hub.start().done(function () { });
+
+    });
+
+</script>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <head>
+    <meta charset="UTF-8" /> 
+    <title>
+        HTML Document Structure
+    </title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+
+
+    <body>
+
+
+
+<div id="wrapper">
+
+	<form name="login-form" class="login-form" runat="server" method="post">
+	
+		<div class="header">
+        	
+		</div>
+
+		<div class="footer">
+		
+
+            <button id="loginButton" type="button" class="button" style="font-family: exo">Login</button>
+            <button id="logoutButton" type="button" class="register" style="font-family: exo">Logout</button>
+           
+		
+		</div>
+	
+        </form>
+
+</div>
+
+
+        
+	    <div id="log"></div>
+    
+        </body>
+</html>
