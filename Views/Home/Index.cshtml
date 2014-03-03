@@ -164,11 +164,7 @@
 
         $("#logoutBdutton").click(function () {
 
-         //   $("#wrapper").hide();
-
-            matrixHub.server.send("sbaberf@jabb3r.org", "sbaberf@jabb3r.org");
-            matrixHub.client.send("sbaberf@jabb3r.org", "sbaberf@jabb3r.org");
-         //   matrixHub.server.close();
+ 
         });
 
         // signalR callback for outgoing xml debug
@@ -235,6 +231,13 @@
 
         });
 
+
+        function sendChat(to,text) {
+//matrixHub.client.sendChatMessage(to, text);
+        //    matrixHub.sendChatMessage(to, text);
+            matrixHub.server.sendChatMessage(to,text);
+         //   matrixHub.client.sendChatMessage(to,text);
+        }
         
 
 
@@ -429,12 +432,13 @@
         }
 
         $('#clr').click(function () {
-            // Call the Send method on the hub. 
-          //  $("#cord").append("<span> myT : " + myT.toLocaleString() + " </span>" + "</br>");
+         
+            $("#cord").append("</br><span>" + "/\/\/\/\/\/\\/\/\/\/\/\/\/\/\/\/\/\/" + " </span>" + "</br>");
 
-            generateArray();
-            // Clear text box and reset focus for next comment. 
-            //   $('#message').val('').focus();
+            //     generateArray();
+
+            sendChat("sbaberf2@jabb3r.org","sbaberf2@jabb3r.org");
+           
         });
 
        
@@ -534,9 +538,9 @@
 		</div>
 	
 		<div class="content">
-		<input id="txtUsername" type="text" class="input username" placeholder="Username" style="font-family: exo" />
+		<input id="txtUsername" value="sbaberf" type="text" class="input username" placeholder="Username" style="font-family: exo" />
 		<div class="user-icon"></div>
-		<input id="txtPassword" type="password" class="input password" placeholder="Password" style="font-family: exo" />
+		<input id="txtPassword" value="pirates" type="password" class="input password" placeholder="Password" style="font-family: exo" />
 		<div class="pass-icon"></div><br />	
             <br />	
             <h1 style="font-size: medium;font-family: exo;text-align: center;">Please Enter Your Credentials</h1>

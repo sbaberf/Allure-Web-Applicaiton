@@ -97,7 +97,7 @@ namespace WebClient.Common
             DisplayEvent("OnMessage");
 
             Clients.Client(Context.ConnectionId).onMessage(
-                   new Message{From = e.Message.From, Body = e.Message.Body}
+                   new Messages{From = e.Message.From, Body = e.Message.Body}
                    );
                
         }
@@ -207,6 +207,16 @@ namespace WebClient.Common
 
             return "Offline";
         }
+
+        public void SendChatMessage(string to, string text)    {
+        XmppClient xmppClient = XmppClients[Context.ConnectionId];
+        xmppClient.Send(new Message {
+            Type = MessageType.chat,
+                    To = to,
+                    Body = text
+                });
+        }
+     
 
         private void SetLicense()
         {
