@@ -9,6 +9,7 @@
     <script src="@Url.Content("~/Scripts/jquery.signalR-1.0.1.js")" type="text/javascript"></script> 
     <script src="@Url.Content("~/signalr/hubs")" type="text/javascript"></script>
     <script src="@Url.Content("~/Scripts/jquery.cookie.js")" type="text/javascript"></script>
+    <script src="@Url.Content("~/Scripts/adapter.js")" type="text/javascript"></script>
 
 <script type="text/javascript">
 
@@ -142,51 +143,58 @@
 
         var matrixHub = $.connection.matrixHub;
 
-
+        $("#draw").show();
+        $("#video").hide();
+        $("#Chat").hide();
+        $("#wrapper2").hide();
+        $("#wrapper").hide();
+        $("#animation").hide();
+       
         $("#loginButton").click(function () {
 
             $.cookie("un", $("#txtUsername").val());
             $.cookie("p", $("#txtPassword").val());
-
-              
+             
             matrixHub.server.connect(
                 $("#txtUsername").val(),
                 $("#txtPassword").val(),
                 "jabb3r.org");
 
             $.cookie("con", matrixHub);
-            
 
-
+            $("#wrapper").hide();
+            $("#animation").show();         
         });
 
-        
+          
 
         $("#logoutBdutton").click(function () {
 
- 
+         
         });
 
         // signalR callback for outgoing xml debug
         matrixHub.client.sendXml = function (message) {
-            $("#log").append("<span class='log send'>" + message + "</span><br/>");
+         //   $("#log").append("<span class='log send'>" + message + "</span><br/>");
            
         };
 
         // signalR callback for incoming xml debug
         matrixHub.client.receiveXml = function (message) {
-            $("#log").append("<span class='log recv'>" + message + "</span><br/>");
+         //   $("#log").append("<span class='log recv'>" + message + "</span><br/>");
             
         };
 
         // signalR callbck for displaying matrix event (infos only)
         matrixHub.client.displayEvent = function (event) {
-            $("#events").append("<span class='event'>" + event + "</span><br/>");
-
+         //   $("#events").append("<span class='event'>" + event + "</span><br/>");
             if (event == "OnLogin") {
-              //  matrixHub.server.close();
-               $("#log").append("<span class='log recv'>" + "AOOO NA JEEEEEEEEEE" + "</span><br/>");
-            //    window.location.href = "Home/Main";
+                $("#animation").hide();
+                $("#wrapper").hide();
+                $("#wrapper2").hide();
+                $("#draw").show();
+                $("#video").show();
+                $("#Chat").show();                             
             }
         };
 
@@ -214,18 +222,21 @@
         matrixHub.client.onMessage = function (msg) {
             $("#log").append(
                     "<span class='from'>" + msg.From + ":</span>" +
-                    "<span class='message'>" + msg.Body + ":</span>" +
+                   "<span class='message'>" + msg.Body + ":</span>" +
                     "</br>"
             );
+
+            if (msg.Body != null) {
+                //DrawOnWhiteBoard(msg.Body);
+                otherway(msg.Body);
+            }
+
         };
 
         $.connection.hub.start().done(function () {
 
             $('#logoutButton').click(function () {
-                // Call the Send method on the hub. 
-                chat.server.send("sbaberf2@jabb3r.org", "sbaberf2@jabb3r.org");
-                // Clear text box and reset focus for next comment. 
-             //   $('#message').val('').focus();
+
             });
 
 
@@ -239,10 +250,6 @@
          //   matrixHub.client.sendChatMessage(to,text);
         }
         
-
-
-        
-
         var canvas=document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
         var paint;
@@ -250,15 +257,14 @@
         $('#canvas').mousedown(function (e) {
             var mouseX = e.pageX - this.offsetLeft;
             var mouseY = e.pageY - this.offsetTop;
-
             paint = true;
-            addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop,false);
+            addClick(e.pageX - this.offsetLeft-10, e.pageY - this.offsetTop-65,false);
             redraw();
         });
 
         $('#canvas').mousemove(function (e) {
             if (paint) {
-                addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop, true);
+                addClick(e.pageX - this.offsetLeft - 10, e.pageY - this.offsetTop -65, true);
                 redraw();
             }
         });
@@ -271,109 +277,176 @@
             paint = false;
         });
 
+        ///////////////////////////////// WHITE BOARD CONFIG/////////////////////////
         var clickX = new Array();
         var clickY = new Array();
         var clickDrag = new Array();
-
-        
-
+        var clickColour = new Array();
+        var clickSize = new Array();
+        var Colour = "#df4b26";
+        var Size = 6;
+        var lastLoc = 0;
+        ///////////////////////////////// WHITE BOARD CONFIG/////////////////////////
+     
         var myT = new Array;
-
-
-        
 
         function addClick(x, y, dragging) {
             clickX.push(x);
             clickY.push(y);
             clickDrag.push(dragging);
+            clickColour.push(Colour);
+            clickSize.push(Size);
         }
 
         function redraw() {
 
+       
+
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clears the canvas
-            ctx.strokeStyle = "#df4b26";
             ctx.lineJoin = "round";
-            ctx.lineWidth = 6;
-
-        //   myT.splice(0, myT.length);
-
-            //   $("#cord").append("<span>" + "/\/\/\/\/\/\\/\/\/\/\/\/\/\/\/\/\/\/" + " </span>" + "</br>");
-            $("#cord").append("<span>" + "/\/\/\/\/\/\\/\/\/\HERE/\/\/\/\/\/\/\/\/" + " </span>" + "</br>");
+            
 
             for (var i = 0; i < clickX.length; i++) {
 
+                ctx.strokeStyle = clickColour[i];            
+                ctx.lineWidth = clickSize[i];
                 ctx.beginPath();
 
                 if (clickDrag[i] && i) {
 
-                    $("#cord").append("<span>" + clickX[i - 1] + " " + clickY[i - 1] + " </span>" + "</br>");
-
-          //         myT.push(clickX[i - 1]);
-         //          myT.push(",");
-          //         myT.push(clickY[i - 1]);
-           //        myT.push(",");
-          //      myT.push(clickDrag[i]);
-          //         myT.push("|");
-//$("#cord").append("<span> X : " + clickX[i - 1] + " </span>" + "<span> Y : " + clickY[i - 1] + " </span>" + "</br>");
+             //       $("#Chat").append("<span>" + (clickX[i] - 1) + " " + clickY[i] + " </span>" + "</br>");
                     ctx.moveTo(clickX[i - 1], clickY[i - 1]);
 
                 } else {
 
-        //           myT.push((clickX[i] - 1));
-       //            myT.push(",");
-        //            myT.push(clickY[i]);
-         //           myT.push(",");
-        //            myT.push(false);
-                    //           myT.push("|");
-
-                    $("#cord").append("<span>" + (clickX[i] - 1) + " " + clickY[i] + " </span>" + "</br>");
-
-         //           $("#cord").append("<span> X2 : " + (clickX[i] - 1) + " </span>" + "<span> Y2 : " + clickY[i] + " </span>" + "</br>");
+              //      $("#Chat").append("<span>" + (clickX[i] - 1) + " " + clickY[i] + " </span>" + "</br>");
                     ctx.moveTo(clickX[i] - 1, clickY[i]);
                 }
-
-                $("#cord").append("<span>" + "/\/\/\/\/\/\\/\/\/\HERE/\/\/\/\/\/\/\/\/" + " </span>" + "</br>");
 
                 ctx.lineTo(clickX[i], clickY[i]);
                 ctx.closePath();
                 ctx.stroke();
             }
 
-       //     clickX.pop();
-        //    clickY.pop();
-       //     clickDrag.pop();
+            
 
-       //     clickX.push(clickX[i]);
-       //     clickY.push(clickY[i]);
-           // clickDrag.push(false);
+        }
+
+        function DrawOnWhiteBoard(cr) {
+
+            $("#Chat").append("<span>" + cr + " </span>" + "</br>");
+            var dc = new Array();
+            var temp = new Array();
+
+            var size = 0;
+            var tempsize = 0;
+
+            for (var p = 0; p < cr.length; p++) {
+
+                if (cr[p] == ",") {
+                    dc[size] = temp.toString();
+                    size++;
+                    tempsize = 0;
+                }
+
+                else {
+                    temp[tempsize] = cr[p];
+                    tempsize++;
+                }
+
+            }
+
+            for (var u = 0; u < size; u++) {
+                $("#Chat").append("<span>" + dc[u] + "</span>" );
+            }
+
+            var gr = new Array();
+
+            gr = cr.split(",");
+
+            for (var v = 0; v < gr.length ; v++) {
+               $("#Chat").append("<span>" + gr[v] + " </span>" );
+            }
+           
+            mydraw(gr);
+        }
+
+        function otherway(cr) {
+
+            var dc = new Array();
+            var temp = new Array();
+
+            var size = 0;
+            var tempsize = 0;
+
+            for (var p = 0; p < cr.length; p++) {
+
+                if (cr[p] == ",") {
+                    dc[size] = temp.toString();
+                    size++;
+                    tempsize = 0;
+                }
+
+                else {
+                    temp[tempsize] = cr[p];
+                    tempsize++;
+                }
+
+            }
+
+            for (var u = 0; u < size; u++) {
+                $("#Chat").append("<span>" + dc[u] + "</span>");
+            }
+
+            var gr = new Array();
+
+            gr = cr.split(",");
+
+            for (var t = 0; t < gr.length;) {
+
+                clickX.push(gr[t]);
+                t++;
+                clickY.push(gr[t]);
+                t++;
+                clickDrag.push(gr[t]);
+                t++;
+                clickColour.push(gr[t]);
+                t++;
+                clickSize.push(gr[t]);
+                t++;
+                
+            }
+
+            redraw();
+
         }
 
         function mydraw(msg) {
 
-            for (var h = 0; h < msg.length; h++) {
-                $("#cord").append("<span>" + msg[h] + " </span>");
-            }
-
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clears the canvas
-            ctx.strokeStyle = "#443450";
             ctx.lineJoin = "round";
-            ctx.lineWidth = 55;
-
+            ctx.lineWidth = 8;
+        
             var clickXT = new Array();
             var clickYT = new Array();
             var clickDragT = new Array();
+            var clickColourT = new Array();
+            var clickSizeT = new Array();
 
             var y = 0;
 
             for (var g = 0; g < msg.length; ) {
-
-               
-               
+                              
                 clickXT[y] = msg[g];
                 g++;
                 clickYT[y] = msg[g];
                 g++;
                 clickDragT[y] = msg[g];
+                g++;
+                clickColourT[y] = msg[g];
+                g++;
+
+                clickSizeT[y] = msg[g];
                 g++;
 
                 y++;
@@ -382,18 +455,21 @@
 
             for (var i = 0; i < clickXT.length; i++) {
 
+                ctx.strokeStyle = clickColourT[i];
+                ctx.lineWidth = 2 ;//clickSizeT[i];
+
                 ctx.beginPath();
 
                 if (clickDragT[i] && i) {
                    
                     ctx.moveTo(clickXT[i - 1], clickYT[i - 1]);
 
-                    $("#cord").append("<span>" + clickXT[i - 1] + " " + clickYT[i - 1] + " </span>" + "</br>");
+             //       $("#cord").append("<span>" + clickXT[i - 1] + " " + clickYT[i - 1] + " </span>" + "</br>");
 
                 } else {
 
                     ctx.moveTo(clickXT[i] - 1, clickYT[i]);
-                    $("#cord").append("<span>" + (clickX[i] - 1) + " " + clickY[i] + " </span>" + "</br>");
+             //       $("#cord").append("<span>" + (clickX[i] - 1) + " " + clickY[i] + " </span>" + "</br>");
                 }
 
                 ctx.lineTo(clickXT[i], clickYT[i]);
@@ -403,43 +479,66 @@
 
             
         }
-
         
-
         function generateArray() {
 
             var sampleCS = new Array();
-
-            for (var i = 0; i < clickX.length; i++) {
+            for (var i = 0; i < clickX.length; i++) { // pahlay i=0 rakha tha yeah anotherway walay function kay liye hai
 
                 var y = 0;
-                y = i * 3;
-
+                y = i * 5;
      
                     sampleCS[y] = clickX[i];
                     sampleCS[y + 1] = clickY[i];
                     sampleCS[y + 2] = clickDrag[i];
+                    sampleCS[y + 3] = clickColour[i];
+                    sampleCS[y + 4] = clickSize[i];
 
             }
 
-      //      $("#cord").append("<span>" + "/\/\/\/\/\/\\/\/\/\/\/\/\/\/\/\/\/\/" + " </span>" + "</br>");
-            for (var h = 0; h < sampleCS.length; h++) {
-                $("#cord").append("<span>" + sampleCS[h] + " </span>" );
-            }
-       //     $("#cord").append("</br><span>" + "/\/\/\/\/\/\\/\/\/\/\/\/\/\/\/\/\/\/" + " </span>" + "</br>");
+         //   lastLoc = clickX.length-1;
 
-            mydraw(sampleCS);
+         //  mydraw(sampleCS);
+
+            //  176,273,false,#df4b26,6,176,273,true,#df4b26,6   cordinates format
+
+
+
+
+            sendChat("sbaberf2@jabb3r.org", sampleCS.toString());
+         //   sendChat("sbaberf2@jabb3r.org",cordinates);
         }
 
-        $('#clr').click(function () {
-         
-            $("#cord").append("</br><span>" + "/\/\/\/\/\/\\/\/\/\/\/\/\/\/\/\/\/\/" + " </span>" + "</br>");
+        $('#registerButton').click(function () {
 
-            //     generateArray();
+            $("#wrapper").hide();
+            $("#wrapper2").show();
 
-            sendChat("sbaberf2@jabb3r.org","sbaberf2@jabb3r.org");
+        });
+
+        $('#Back').click(function () {
+
+            $("#wrapper").show();
+            $("#wrapper2").hide();
+
+        });
+
+         $('#clr').click(function () {
+
+         //    sendCondinates();
+            generateArray();
+             //  sendChat("sbaberf2@jabb3r.org", "234242342");
+
+          //   matrixHub.client.GroupChat();
+          //   matrixHub.server.GroupChat();
            
         });
+
+ //       getUserMedia({ video: true, audio: true }, function (stream) {
+  //          var VideoTag = document.querySelector('video');
+  //          attachMediaStream(VideoTag, stream);
+  //      }, function (even) {
+  //      });
 
        
 
@@ -455,121 +554,195 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 
-    <head>
-    <meta charset="UTF-8" /> 
-    <title>
-        HTML Document Structure
+<head>
+    <meta charset="UTF-8" />
+    <title>HTML Document Structure
     </title>
     <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 
 
-    <body>
-        
-        <div id="draw">
+<body>
 
-         <div>
-    Shared White Board
+  
+            
+
+
+    <div id="video">
+        <video autoplay="autoplay" />
     </div>
 
-    <div>
-
-    <table>
-    
-    <tr>
-    
-    <td>
-    Please draw here
-    </td>
-
-    <td>
-    Select Color
-    </td>
-        
-    </tr>
-
-    <tr>
-
-     <td>
-     <canvas id="canvas" width="400" height="400" style="border:2px solid; background:white"></canvas>
-     </td>
-
-     <td>
-
-    <div style="width:10px;height:10px;background:green;" id="green" onclick="color(this)"></div>
-    <div style="width:10px;height:10px;background:blue;" id="blue" onclick="color(this)"></div>
-    <div style="width:10px;height:10px;background:red;" id="red" onclick="color(this)"></div>
-    <div style="width:10px;height:10px;background:yellow;" id="yellow" onclick="color(this)"></div>
-    <div style="width:10px;height:10px;background:orange;" id="orange" onclick="color(this)"></div>
-    <div style="width:10px;height:10px;background:black;" id="black" onclick="color(this)"></div>
-    <div>Eraser</div>
-    <div style="width:10px;height:10px;background:white;border:2px solid;" id="white" onclick="color(this)"></div>
-    
-    </td>
-    
-    
-    </tr>
-
-    <tr style="width:800px">
-    <td style="width:400px"><input type="button" value="save" id="btn" class="button"></td>
-    <td style="width:400px"><input type="button" value="clear" id="clr" class="button"></td>
-    </tr>
-
-    <tr style="width:800px">
-    <img id="canvasimg" style="display:none;">
-    </tr>
-    
-    </table>
-    
-        <div id="cord"></div>
-    
-    </div>
-
-</div>
-
-<div id="wrapper">
-
-	<form name="login-form" class="login-form" runat="server" method="post">
-	
-		<div class="header">
-        <h1 style="text-align: center">
-            <img alt="" src="images/k.png" style="width: 190px; height: 89px; text-align: center;" /></h1>
-		<h1 style="font-size: large; font-family: Exo; text-transform: capitalize;text-align: center;">Welcome To ALLURE </h1>     
-		</div>
-	
-		<div class="content">
-		<input id="txtUsername" value="sbaberf" type="text" class="input username" placeholder="Username" style="font-family: exo" />
-		<div class="user-icon"></div>
-		<input id="txtPassword" value="pirates" type="password" class="input password" placeholder="Password" style="font-family: exo" />
-		<div class="pass-icon"></div><br />	
-            <br />	
-            <h1 style="font-size: medium;font-family: exo;text-align: center;">Please Enter Your Credentials</h1>
-            	
-		</div>
-
-		<div class="footer">
-		
-
-            <button id="loginButton" type="button" class="button" style="font-family: exo">Login</button>
-            <button id="logoutButton" type="button" class="register" style="font-family: exo">Logout</button>
-           
-		
-		</div>
-	
-        </form>
-
-</div>
-
-<div class="gradient"></div>
-
-        
-<div id="log"></div>
-    
-
-
-        </body>
 
    
+
+
+
+    <div id="draw">
+        
+        <table>
+            <tr>
+                <td>
+                    <h1 style="font-size: large; font-family: Exo; text-transform: capitalize; text-align: left;">Shared White Board</h1>
+                </td>
+
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <td>
+                    <h1 style="font-size: large; font-family: Exo; text-transform: capitalize; text-align: left;">Please Draw Here</h1>
+                </td>
+                <td>
+                    <h1 style="font-size: large; font-family: Exo; text-transform: capitalize; text-align: left;">Options</h1>
+                </td>
+            </tr>
+
+        </table>        
+    
+
+        <table>
+            <tr>
+                <td>
+                    <canvas id="canvas" width="300" height="300" style="border: 2px solid; background: white"></canvas>
+                </td>
+                <td>
+                    <button id="save" type="button" class="btns" style="font-family: exo">Save Drawing</button> <br />    <br />                                   
+                    <button id="clr" type="button" class="btns" style="font-family: exo">Clear Drawing</button>  <br /> <br /> 
+                    <button id="sd" type="button" class="btns" style="font-family: exo">Share Drawing</button> 
+                </td>
+            </tr>
+</table>
+
+      
+
+        <table>
+            <tr>
+                <td style="font-family: exo">Select Colour :::::: </td>
+                <td style="width: 20px; height: 20px; background: green;" id="green" onclick="color(this)"></td>
+                <td style="width: 20px; height: 20px; background: blue;" id="blue" onclick="color(this)"></td>
+                <td style="width: 20px; height: 20px; background: red;" id="red" onclick="color(this)"></td>
+                <td style="width: 20px; height: 20px; background: yellow;" id="yellow" onclick="color(this)"></td>
+                <td style="width: 20px; height: 20px; background: orange;" id="orange" onclick="color(this)"></td>
+                <td style="width: 20px; height: 20px; background: black;" id="black" onclick="color(this)"></td>                               
+           </tr>
+
+            <tr>
+                <td style="font-family: exo">Eraser :::::: </td>
+             <td style="width: 20px; height: 20px; background: white; border: 2px solid;" id="white" onclick="color(this)"></td>                
+            </tr>
+           
+            <tr>
+                <td style="font-family: exo">Select Brush Size :::::: </td>
+               <td style="color:white; text-align: center; width: 20px; height: 20px; background: black;" id="1" onclick="color(this)">2.5</td>
+                 <td style="color:white; text-align: center; width: 20px; height: 20px; background: black;" id="2" onclick="color(this)">5</td>
+                 <td style="color:white; text-align: center; width: 20px; height: 20px; background: black;" id="3" onclick="color(this)">10</td>
+                 <td style="color:white; text-align: center; width: 20px; height: 20px; background: black;" id="4" onclick="color(this)">20</td>
+                <td style="color:white; text-align: center; width: 20px; height: 20px; background: black;" id="5" onclick="color(this)">25</td>
+            </tr>
+
+</table>
+         
+        
+
+            <tr style="width: 800px">
+                <img id="canvasimg" style="display: none;">
+            </tr>
+
+        
+         
+           
+     
+        
+      </div>      
+   
+    
+
+    <div id="Chat" style="height: 120px; width: 1200px; border: 1px solid #ccc; font: 16px/26px Georgia, Garamond, Serif; overflow: auto;"></div>
+
+    <div id="animation" class="container">
+        <div class="box">
+            <div class="loader8"></div>
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <h1 style="font-size: large; font-family: Exo; text-transform: capitalize; text-align: center;">CONNECTING</h1>
+        </div>
+    </div>
+
+
+    <div id="wrapper">
+
+        <form name="login-form" class="login-form" runat="server" method="post">
+
+            <div class="header">
+                <h1 style="text-align: center">
+                    <img alt="" src="images/k.png" style="width: 190px; height: 89px; text-align: center;" /></h1>
+                <h1 style="font-size: large; font-family: Exo; text-transform: capitalize; text-align: center;">Welcome To ALLURE </h1>
+            </div>
+
+            <div class="content">
+                <input id="txtUsername" value="sbaberf" type="text" class="input username" placeholder="Username" style="font-family: exo" />
+                <div class="user-icon"></div>
+                <input id="txtPassword" value="pirates" type="password" class="input password" placeholder="Password" style="font-family: exo" />
+                <div class="pass-icon"></div>
+                <br />
+                <br />
+                <h1 style="font-size: medium; font-family: exo; text-align: center;">Please Enter Your Credentials</h1>
+
+            </div>
+
+            <div class="footer">
+
+
+                <button id="loginButton" type="button" class="button" style="font-family: exo">Login</button>
+                <button id="registerButton" type="button" class="register" style="font-family: exo">Register</button>
+
+
+            </div>
+
+        </form>
+    </div>
+
+    <div id="wrapper2">
+        <form name="register-form" class="login-form" runat="server" method="post">
+
+            <div class="header">
+                <h1 style="text-align: center">
+                    <img alt="" src="images/k.png" style="width: 190px; height: 89px; text-align: center;" /></h1>
+                <h1 style="font-size: large; font-family: Exo; text-transform: capitalize; text-align: center;">Welcome To ALLURE </h1>
+            </div>
+
+            <div class="content">
+                <h1 style="font-size: medium; font-family: exo; text-align: center;">Please Enter Your Details</h1>
+                <br>
+                <input id="newUsername" type="text" class="input username" placeholder="Username" style="font-family: exo" />
+                <input id="newPassword" type="password" class="input username" placeholder="Password" style="font-family: exo" />
+                <input id="newDomain" type="text" class="input username" placeholder="Domain" style="font-family: exo" />
+            </div>
+
+            <div class="footer">
+                <button id="Register" type="button" class="button" style="font-family: exo">Register</button>
+                <button id="Back" type="button" class="register" style="font-family: exo">Back</button>
+            </div>
+
+        </form>
+
+    </div>
+
+    <div class="gradient"></div>
+
+
+    <div id="log"></div>
+
+
+
+</body>
+
+
 </html>
 
 

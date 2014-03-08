@@ -7,12 +7,95 @@ using Matrix.Xmpp;
 using Microsoft.AspNet.SignalR;
 
 using Matrix.Xmpp.Client;
+using Matrix;
+using Matrix.Xmpp.Register;
 
 namespace WebClient.Common
 {
     public class MatrixHub : Hub
     {
         private static readonly Dictionary<string, XmppClient> XmppClients = new Dictionary<string, XmppClient>();
+        private MucManager mm;
+
+        public void GroupChat()//Jid roomJid, string nickname)
+        {
+
+            XmppClient xmppClient = XmppClients[Context.ConnectionId];
+
+            mm = new MucManager(xmppClient);
+
+       //     mm.EnterRoom("ALLURE786", "sbaberf@jabb3r.org");
+
+        //    mm = new MucManager(xmppClient);
+            mm.EnterRoom("ALLURE786", "sbaberf@jabb3r.org", true);
+            mm.Invite("sbaberf2@jabb3r.org", "ALLURE786", "Please join");
+        //    mm.Invite("sbaberf3@jabb3r.org", "ALLURE786", "Please join");
+
+            // Setup new Message Callback using the MessageFilter
+        //    xmppClient.MessageFilter.Add(roomJid, new BareJidComparer(), MessageCallback);
+            
+            // Setup new Presence Callback using the PresenceFilter
+          //  xmppClient.PresenceFilter.Add(roomJid, new BareJidComparer(), PresenceCallback);
+
+        }
+
+        private void sendGroupMsg(Jid roomJid, string msgs)
+        {
+            // Make sure that the users send no empty messages
+            XmppClient xmppClient = XmppClients[Context.ConnectionId];
+
+                var msg = new Matrix.Xmpp.Client.Message
+                {
+                    Type = MessageType.groupchat,
+                    To = roomJid,
+                    Body = msgs, 
+                };
+
+                xmppClient.Send(msg);
+
+           
+        }
+
+        private void MessageCallback(object sender, MessageEventArgs e)
+        {
+            if (e.Message.Type == MessageType.groupchat)
+                IncomingMessage(e.Message);
+        }
+
+        private void IncomingMessage(Matrix.Xmpp.Client.Message msg)
+        {
+            if (msg.Type == MessageType.error)
+            {
+                //Handle errors here
+                // we dont handle them in this example
+                return;
+            }
+
+            if (msg.Subject != null)
+            {
+            //    txtSubject.Text = msg.Subject;
+
+           //     rtfChat.SelectionColor = Color.DarkGreen;
+                // The Nickname of the sender is in GroupChat in the Resource of the Jid
+         //       rtfChat.AppendText(msg.From.Resource + " changed subject: ");
+         //       rtfChat.SelectionColor = Color.Black;
+        //        rtfChat.AppendText(msg.Subject);
+       //         rtfChat.AppendText("\r\n");
+            }
+            else
+            {
+                if (msg.Body == null)
+                    return;
+//
+      //          rtfChat.SelectionColor = Color.Red;
+                // The Nickname of the sender is in GroupChat in the Resource of the Jid
+       //         rtfChat.AppendText(msg.From.Resource + " said: ");
+       //         rtfChat.SelectionColor = Color.Black;
+      //          rtfChat.AppendText(msg.Body);
+      //          rtfChat.AppendText("\r\n");
+            }
+        }
+
 
         public override Task OnDisconnected()
         {
@@ -77,6 +160,11 @@ namespace WebClient.Common
                 xmppClient.OnBeforeSendPresence += xmppClient_OnBeforeSendPresence;
                 xmppClient.OnBeforeSasl += xmppClient_OnBeforeSasl;
 
+                xmppClient.OnRegister += xmppClient_OnRegister;
+                xmppClient.OnRegisterInformation += xmppClient_OnRegisterInformation;
+                xmppClient.OnRegisterError += xmppClient_OnRegisterError;
+ 
+
                 XmppClients.Add(Context.ConnectionId, xmppClient);
             }
             
@@ -85,6 +173,37 @@ namespace WebClient.Common
         public override Task OnReconnected()
         {
             return Clients.All.rejoined(Context.ConnectionId, DateTime.Now.ToString());
+        }
+
+
+        public void Register()
+        {
+            //xmppClient.SetUsername(txtUsername.Text);
+      //      xmppClient.SetXmppDomain(txtServer.Text);
+       //     xmppClient.Password = txtPassword.Text;
+       //     xmppClient.RegisterNewAccount = true;
+        }
+
+
+        private void xmppClient_OnRegisterInformation(object sender, RegisterEventArgs e)
+        {
+            var xmppClient = new XmppClient();
+            e.Register.RemoveAll<Matrix.Xmpp.XData.Data>();
+            e.Register.Username = xmppClient.Username;
+            e.Register.Password = xmppClient.Password;
+
+          
+        }
+
+        private void xmppClient_OnRegister(object sender, Matrix.EventArgs e)
+        {
+            // registration was successful
+        }
+
+        private void xmppClient_OnRegisterError(object sender, IqEventArgs e)
+        {
+            // registration failed.
+      //      xmppClient.Close();
         }
 
         void xmppClient_OnIq(object sender, IqEventArgs e)
@@ -187,6 +306,17 @@ namespace WebClient.Common
         {
             XmppClient xmppClient = XmppClients[Context.ConnectionId];
             xmppClient.Close();
+        }
+
+        public void CreateChatRoom()
+        {
+            XmppClient xmppClient = XmppClients[Context.ConnectionId];
+
+            mm = new MucManager(xmppClient);         
+            mm.EnterRoom("ALLURE786", "sbaberf@jabb3r.org", true);
+            mm.Invite("sbaberf2@jabb3r.org", "ALLURE786", "Please join");
+            mm.Invite("sbaberf3@jabb3r.org", "ALLURE786", "Please join");
+
         }
         
         private string ShowToString(Show show)

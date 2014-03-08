@@ -112,6 +112,7 @@
     <Content Include="images\logo.png" />
     <Content Include="images\pass-icon.png" />
     <Content Include="images\user-icon.png" />
+    <Content Include="Scripts\adapter.js" />
     <Content Include="Scripts\jquery-1.9.1.js" />
     <Content Include="Scripts\jquery-1.9.1.min.js" />
     <Content Include="Scripts\jquery.cookie.js" />
